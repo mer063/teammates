@@ -421,6 +421,7 @@ var CustomFeedbackPaths = {
         if (isChangingParticipantTypeFromCustomToPredefined) {
             $giverSelect.find('option[value="' + CustomFeedbackPaths.FEEDBACK_PARTICIPANT_TYPE_CUSTOM + '"]').remove();
             $recipientSelect.find('option[value="' + CustomFeedbackPaths.FEEDBACK_PARTICIPANT_TYPE_CUSTOM + '"]').remove();
+            hideInvalidRecipientTypeOptions($giverSelect);
         }
     },
     

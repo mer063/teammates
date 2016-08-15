@@ -2,10 +2,15 @@ package teammates.common.util;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import teammates.common.datatransfer.FeedbackParticipantType;
+import teammates.common.datatransfer.FeedbackPathAttributes;
 
 import com.google.appengine.api.datastore.Text;
 
@@ -632,6 +637,55 @@ public class FieldValidator {
             errors.add(String.format(PARTICIPANT_TYPE_TEAM_ERROR_MESSAGE,
                     recipientType.toDisplayRecipientName(),
                     giverType.toDisplayGiverName()));
+        }
+        
+        if (giverType == FeedbackParticipantType.CUSTOM && recipientType != FeedbackParticipantType.CUSTOM
+                || recipientType == FeedbackParticipantType.CUSTOM && giverType != FeedbackParticipantType.CUSTOM) {
+            errors.add("Both the feedback giver and feedback recipient have to be Custom"
+                       + " if the question has custom feedback paths.");
+        }
+        
+        return errors;
+    }
+    
+    public List<String> getValidityInfoForFeedbackPaths(List<FeedbackPathAttributes> feedbackPaths) {
+        
+        Assumption.assertNotNull("Non-null value expected", feedbackPaths);
+        
+        List<String> errors = new LinkedList<String>();
+        Map<String, Set<String>> giverToRecipientsMap = new HashMap<String, Set<String>>();
+        
+        if (!feedbackPaths.isEmpty()) {
+            FeedbackPathAttributes prevFeedbackPath = feedbackPaths.get(0);
+            giverToRecipientsMap.put(prevFeedbackPath.getGiver(),
+                                     new HashSet<String>(Arrays.asList(prevFeedbackPath.getRecipient())));
+            
+            for (int i = 1; i < feedbackPaths.size(); i++) {
+                FeedbackPathAttributes currFeedbackPath = feedbackPaths.get(i);
+                if (!prevFeedbackPath.getFeedbackPathGiverType().equals(
+                        currFeedbackPath.getFeedbackPathGiverType())) {
+                    errors.add("Feedback path givers are not all of the same type");
+                    break;
+                }
+                
+                if (!prevFeedbackPath.getFeedbackPathRecipientType().equals(
+                        currFeedbackPath.getFeedbackPathRecipientType())) {
+                    errors.add("Feedback path recipients are not all of the same type");
+                    break;
+                }
+                
+                Set<String> recipientsForGiver = giverToRecipientsMap.get(currFeedbackPath.getGiver());
+                
+                if (recipientsForGiver == null) {
+                    recipientsForGiver = new HashSet<String>();
+                } else if (recipientsForGiver.contains(currFeedbackPath.getRecipient())) {
+                    errors.add("Duplicate feedback paths exist.");
+                    break;
+                }
+                
+                recipientsForGiver.add(currFeedbackPath.getRecipient());
+                giverToRecipientsMap.put(currFeedbackPath.getGiver(), recipientsForGiver);
+            }
         }
         
         return errors;

@@ -938,6 +938,7 @@ function hideInvalidRecipientTypeOptions($giverSelect) {
     var recipientType = $recipientSelect.val();
     switch (giverType) {
     case 'STUDENTS':
+    case 'CUSTOM':
         // all recipientType options enabled
         break;
     case 'SELF':
